@@ -24,13 +24,14 @@ function App() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/users')
-      const data = await response.json()
-      setUsers(data)
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const response = await fetch(`${apiUrl}/api/users`);
+      const data = await response.json();
+      setUsers(data);
     } catch (err) {
-      console.error('Hiba a felhasználók betöltésénél:', err)
+      console.error('Hiba a felhasználók betöltésénél:', err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
