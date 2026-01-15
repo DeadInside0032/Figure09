@@ -18,15 +18,7 @@ function Messages({ user }) {
 
   const fetchMessages = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/messages')
-      // Ha admin, mutasd az összes üzenetet. Ha normál felhasználó, csak a sajátjait
-      const allMessages = response.data
-      if (!user?.is_admin) {
-        const filtered = allMessages.filter(m => m.sender_id === user?.id || m.recipient_id === user?.id)
-        setMessages(filtered)
-      } else {
-        setMessages(allMessages)
-      }
+      setMessages([])
     } catch (err) {
       setError('Nem sikerült betölteni az üzeneteket')
     } finally {
@@ -44,7 +36,6 @@ function Messages({ user }) {
     }
   }
 
-  // Felhasználók szűrése keresés alapján
   const filteredUsers = otherUsers.filter(u =>
     u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -78,19 +69,17 @@ function Messages({ user }) {
   if (loading) return <div className="container"><p>Betöltés...</p></div>
 
   return (
-    <div className="container">
-      <h1>💬 Üzenetek</h1>
+    <div className="container" style={{ width: '100%', maxWidth: 'none', margin: 0, padding: 0, background: 'none' }}>
 
-      <div className="messages-container">
+      <div className="messages-container" style={{ width: '100%', maxWidth: '1400px', margin: '40px auto', display: 'block' }}>
         {!user?.is_admin && (
-          <div>
-            <h2>Üzenetek küldése</h2>
+          <div style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
             {error && <div className="alert alert-error">{error}</div>}
             {success && <div className="alert alert-success">{success}</div>}
 
-            <form onSubmit={handleSendMessage} style={{ marginTop: '1rem' }}>
+            <form onSubmit={handleSendMessage} style={{ marginTop: '2.5rem', fontSize: '1.2rem', width: '100%', maxWidth: '1400px', background: '#f7faff', padding: '2.5rem 1.5rem', borderRadius: '24px', boxShadow: '0 8px 32px rgba(0,0,0,0.10)' }}>
               <div className="form-group">
-                <label htmlFor="search">Keresés a felhasználók között:</label>
+                <label htmlFor="search">Keresés:</label>
                 <input
                   id="search"
                   type="text"
@@ -154,7 +143,7 @@ function Messages({ user }) {
                   marginBottom: '1rem',
                   color: '#000'
                 }}>
-                  <strong style={{ color: '#000' }}>Kiválasztott címzett:</strong> {otherUsers.find(u => u.id === parseInt(selectedRecipient))?.username}
+                  <strong style={{ color: '#000' }}>Címzett:</strong> {otherUsers.find(u => u.id === parseInt(selectedRecipient))?.username}
                   <button
                     type="button"
                     onClick={() => setSelectedRecipient('')}
@@ -180,13 +169,22 @@ function Messages({ user }) {
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
                   placeholder="Írj üzenetet..."
-                  rows="5"
+                  rows="6"
                   required
                   style={{
                     width: '100%',
-                    padding: '0.75rem',
+                    minWidth: '100%',
+                    maxWidth: '100%',
+                    minHeight: '100px',
+                    resize: 'vertical',
+                    padding: '1.2rem',
                     color: '#000',
-                    backgroundColor: '#fff'
+                    backgroundColor: '#fff',
+                    fontSize: '1rem',
+                    borderRadius: '12px',
+                    border: '2px solid #b3d4fc',
+                    boxSizing: 'border-box',
+                    marginBottom: '2.5rem',
                   }}
                 ></textarea>
               </div>
@@ -196,48 +194,24 @@ function Messages({ user }) {
                 disabled={!selectedRecipient}
                 style={{
                   opacity: selectedRecipient ? 1 : 0.5,
-                  cursor: selectedRecipient ? 'pointer' : 'not-allowed'
+                  cursor: selectedRecipient ? 'pointer' : 'not-allowed',
+                  fontSize: '1.2rem',
+                  padding: '0.8rem 2.2rem',
+                  borderRadius: '8px',
+                  background: 'linear-gradient(90deg, #4f8cff 0%, #38c6ff 100%)',
+                  color: '#fff',
+                  border: 'none',
+                  fontWeight: 'bold',
+                  marginTop: '0.5rem',
+                  boxShadow: '0 2px 8px rgba(79,140,255,0.08)'
                 }}
               >
-                📤 Üzenet küldése
+                 Üzenet küldése
               </button>
             </form>
           </div>
         )}
 
-        <hr style={{ margin: '2rem 0' }} />
-
-        <div>
-          <h2>{user?.is_admin ? '📊 Összes beszélgetés' : '💬 Saját beszélgetéseid'}</h2>
-          <div className="messages-list">
-            {messages.length === 0 ? (
-              <p style={{ textAlign: 'center', color: '#999' }}>Nincs üzenet</p>
-            ) : (
-              messages.map((msg) => (
-                <div key={msg.id} className={`message ${msg.sender_id === user?.id ? 'sent' : 'received'}`}>
-                  <div className="message-meta" style={{ color: '#000' }}>
-                    <strong style={{ color: '#000' }}>
-                      {user?.is_admin ? (
-                        <>
-                          {msg.sender_username} → {msg.recipient_username}
-                        </>
-                      ) : (
-                        <>
-                          {msg.sender_id === user?.id ? 'Te' : msg.sender_username}
-                          {' - '}
-                          {msg.recipient_id === user?.id ? 'Te' : msg.recipient_username}
-                        </>
-                      )}
-                    </strong>
-                    <br />
-                    <span style={{ color: '#000' }}>{new Date(msg.created_at).toLocaleString('hu-HU')}</span>
-                  </div>
-                  <div className="message-text" style={{ color: '#000' }}>{msg.content}</div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
       </div>
     </div>
   )

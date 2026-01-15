@@ -19,7 +19,6 @@ function ConversationPartners({ user }) {
       const response = await axios.get(`http://localhost:3001/api/messages/${user?.id}`)
       const userMessages = response.data
 
-      // Gyűjtsd össze az összes partnert
       const partnersSet = new Map()
       userMessages.forEach(msg => {
         if (msg.sender_id === user?.id) {
@@ -98,7 +97,6 @@ function ConversationPartners({ user }) {
       <h2> Beszélgetés partnerei</h2>
 
       <div style={{ display: 'flex', gap: '2rem', marginTop: '2rem' }}>
-        {/* Partnerek listája */}
         <div style={{ 
           flex: '0 0 250px',
           background: '#f9f9f9',
@@ -145,14 +143,12 @@ function ConversationPartners({ user }) {
           )}
         </div>
 
-        {/* Üzenetek */}
         {selectedPartnerId && (
           <div style={{ flex: '1' }}>
 
             {error && <div className="alert alert-error">{error}</div>}
             {success && <div className="alert alert-success">{success}</div>}
 
-            {/* Üzenetek */}
             <div style={{
               background: '#f9f9f9',
               padding: '1rem',
@@ -183,7 +179,6 @@ function ConversationPartners({ user }) {
               )}
             </div>
 
-            {/* Üzenet küldés */}
             <form onSubmit={handleSendMessage}>
               <div style={{
                 display: 'flex',

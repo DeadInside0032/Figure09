@@ -15,14 +15,11 @@ function UserDashboard({ user }) {
 
   const fetchStats = async () => {
     try {
-      // Lekérjük az adott felhasználó üzeneteit
       const messagesResponse = await fetch(`http://localhost:3001/api/messages/${user?.id}`)
       const messages = await messagesResponse.json()
       
-      // Összes üzenet száma az adott felhasználónak
       const userMessages = messages.length
 
-      // Hány különböző partnerrel kommunikál
       const partners = new Set()
       messages.forEach(msg => {
         if (msg.sender_id === user?.id) {

@@ -23,21 +23,20 @@ function Register({ onLogin }) {
     setLoading(true)
 
     try {
-      const response = await axios.post('http://localhost:3001/api/auth/register', {
-        username,
-        email,
-        password,
-      })
-
-      const { user, token } = response.data
-      onLogin(user, token)
-      navigate('/dashboard')
+      const response = await axios.post('http://localhost:3001/api/register', {
+        username: username,
+        email: email,
+        password: password
+      });
+      const { user, token } = response.data;
+      onLogin(user, token);
+      navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Regisztráció sikertelen')
+      setError(err.response?.data?.message || 'Regisztráció sikertelen');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="container">
@@ -98,7 +97,7 @@ function Register({ onLogin }) {
         </div>
       </form>
     </div>
-  )
+  );
 }
 
-export default Register
+export default Register;

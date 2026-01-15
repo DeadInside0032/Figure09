@@ -21,24 +21,21 @@ export default function Login() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, email, password })
-      })
-
-      const data = await response.json()
-
+      });
+      const data = await response.json();
       if (!response.ok) {
-        setError(data.message || 'Bejelentkezés sikertelen')
-        return
+        setError(data.message || 'Bejelentkezés sikertelen');
+        return;
       }
-
-      localStorage.setItem('currentUser', JSON.stringify(data.user))
-      navigate('/')
-      window.location.reload()
+      localStorage.setItem('currentUser', JSON.stringify(data.user));
+      navigate('/');
+      window.location.reload();
     } catch (err) {
-      setError('Hiba a bejelentkezés során: ' + err.message)
+      setError('Hiba a bejelentkezés során: ' + err.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleRegister = async (e) => {
     e.preventDefault()
@@ -50,24 +47,21 @@ export default function Login() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, email, password })
-      })
-
-      const data = await response.json()
-
+      });
+      const data = await response.json();
       if (!response.ok) {
-        setError(data.message || 'Regisztráció sikertelen')
-        return
+        setError(data.message || 'Regisztráció sikertelen');
+        return;
       }
-
-      localStorage.setItem('currentUser', JSON.stringify(data.user))
-      navigate('/')
-      window.location.reload()
+      localStorage.setItem('currentUser', JSON.stringify(data.user));
+      navigate('/');
+      window.location.reload();
     } catch (err) {
-      setError('Hiba a regisztráció során: ' + err.message)
+      setError('Hiba a regisztráció során: ' + err.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div style={styles.container}>

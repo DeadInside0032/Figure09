@@ -1,94 +1,67 @@
-// ...existing code...
-// Mark message as read (helyes helyen, a route-ok között)
 
-// ════════════════════════════════════════
-// MESSAGES ROUTES
-// ════════════════════════════════════════
 
-// ... korábbi üzenetkezelő endpointok ...
 
-// PATCH: Mark message as read
-app.patch('/api/messages/:id/read', async (req, res) => {
-  const messageId = parseInt(req.params.id);
-  try {
-    const result = await pool.query(
-      'UPDATE messages SET is_read = true, updated_at = NOW() WHERE id = $1 RETURNING *',
-      [messageId]
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Üzenet nem található' });
-    }
-    res.json({ message: 'Üzenet olvasottra állítva', data: result.rows[0] });
-  } catch (err) {
-    console.error('Mark as read error:', err);
-    res.status(500).json({ message: 'Hiba az üzenet olvasottra állításakor' });
-  }
-});
+
+
 const express = require('express');
 const cors = require('cors');
 const pg = require('pg');
 const bcrypt = require('bcrypt');
 require('dotenv').config();
+const pool = new pg.Pool({
+  connectionString: process.env.DATABASE_URL,
+});
 
 const app = express();
 const PORT = 3001;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Debug: Database URL betöltésének ellenőrzése
-console.log('📍 DATABASE_URL loaded:', process.env.DATABASE_URL ? '✅ Yes' : '❌ No');
-
-const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }, // Neon szükséglet
+app.get('/api/users', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id, username, email, is_admin, created_at, updated_at FROM users ORDER BY id ASC');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Get users error:', err);
+    res.status(500).json({ message: 'Hiba a felhasználók lekérésekor' });
+  }
 });
 
-// ════════════════════════════════════════
-// USERS ROUTES
-// ════════════════════════════════════════
-
-// Login endpoint
+// --- LOGIN ENDPOINT ---
 app.post('/api/login', async (req, res) => {
   const { username, email, password } = req.body;
-
-  if (!username || !email || !password) {
-    return res.status(400).json({ message: 'Felhasználónév, email és jelszó szükséges' });
+  if ((!username && !email) || !password) {
+    return res.status(400).json({ message: 'Felhasználónév vagy email és jelszó szükséges' });
   }
-
   try {
-    const result = await pool.query(
-      'SELECT id, username, email, password, is_admin, created_at FROM users WHERE username = $1 AND email = $2',
-      [username, email]
+    // Felhasználó keresése felhasználónév vagy email alapján
+    const userResult = await pool.query(
+      'SELECT * FROM users WHERE username = $1 OR email = $2',
+      [username || '', email || '']
     );
-
-    if (result.rows.length === 0) {
-      return res.status(401).json({ message: 'Felhasználó nem található vagy adatok nem egyeznek' });
+    const user = userResult.rows[0];
+    if (!user) {
+      return res.status(404).json({ message: 'Hibás felhasználónév/email vagy jelszó' });
     }
-
-    const user = result.rows[0];
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) {
-      return res.status(401).json({ message: 'Hibás jelszó' });
+    // Jelszó ellenőrzése
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) {
+      return res.status(401).json({ message: 'Hibás felhasználónév/email vagy jelszó' });
     }
-    res.json({
-      message: 'Sikeres bejelentkezés',
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        is_admin: user.is_admin || false,
-        created_at: user.created_at
-      }
-    });
+    // Ne adjuk vissza a jelszót
+    const { password: _, ...userData } = user;
+    res.json({ user: userData });
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ message: 'Hiba a bejelentkezés során' });
   }
 });
 
-// Register endpoint
+
+console.log('📍 DATABASE_URL loaded:', process.env.DATABASE_URL ? '✅ Yes' : '❌ No');
+
+
 app.post('/api/register', async (req, res) => {
   const { username, email, password } = req.body;
 
@@ -97,7 +70,6 @@ app.post('/api/register', async (req, res) => {
   }
 
   try {
-    // Check if user already exists
     const checkResult = await pool.query(
       'SELECT id FROM users WHERE username = $1 OR email = $2',
       [username, email]
@@ -107,10 +79,8 @@ app.post('/api/register', async (req, res) => {
       return res.status(400).json({ message: 'A felhasználónév vagy email már létezik' });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user (default: is_admin = false)
     const insertResult = await pool.query(
       'INSERT INTO users (username, email, password, is_admin, created_at, updated_at) VALUES ($1, $2, $3, false, NOW(), NOW()) RETURNING id, username, email, is_admin, created_at',
       [username, email, hashedPassword]
@@ -126,47 +96,8 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
-// Get all users
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'OK',
-    message: '🚀 Express szerver működik',
-    timestamp: new Date().toISOString()
-  });
-});
 
-// Get all users
-app.get('/api/users', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT id, username, email, COALESCE(is_admin, false) as is_admin, created_at FROM users ORDER BY created_at DESC');
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Get users error:', err);
-    res.status(500).json({ message: 'Hiba a felhasználók lekérésekor', error: err.message });
-  }
-});
 
-// Get single user
-app.get('/api/users/:id', async (req, res) => {
-  try {
-    const result = await pool.query(
-      'SELECT id, username, email, COALESCE(is_admin, false) as is_admin, created_at FROM users WHERE id = $1',
-      [parseInt(req.params.id)]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Felhasználó nem található' });
-    }
-
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error('Get user error:', err);
-    res.status(500).json({ message: 'Hiba a felhasználó lekérésekor' });
-  }
-});
-
-// Create user (new user from UI)
 app.post('/api/users', async (req, res) => {
   const { username, email, password } = req.body;
 
@@ -184,7 +115,6 @@ app.post('/api/users', async (req, res) => {
       return res.status(400).json({ message: 'A felhasználónév vagy email már létezik' });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const insertResult = await pool.query(
@@ -202,21 +132,17 @@ app.post('/api/users', async (req, res) => {
   }
 });
 
-// Delete user
 app.delete('/api/users/:id', async (req, res) => {
   const userId = parseInt(req.params.id);
 
   try {
-    // Start transaction for deleting user and associated messages
     const result = await pool.query('BEGIN');
 
-    // Delete messages associated with this user
     await pool.query(
       'DELETE FROM messages WHERE sender_id = $1 OR recipient_id = $1',
       [userId]
     );
 
-    // Delete the user
     const deleteResult = await pool.query(
       'DELETE FROM users WHERE id = $1',
       [userId]
@@ -236,11 +162,24 @@ app.delete('/api/users/:id', async (req, res) => {
   }
 });
 
-// ════════════════════════════════════════
-// MESSAGES ROUTES
-// ════════════════════════════════════════
 
-// Get all messages
+app.patch('/api/messages/:id/read', async (req, res) => {
+  const messageId = parseInt(req.params.id);
+  try {
+    const result = await pool.query(
+      'UPDATE messages SET is_read = true, updated_at = NOW() WHERE id = $1 RETURNING *',
+      [messageId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Üzenet nem található' });
+    }
+    res.json({ message: 'Üzenet olvasottra állítva', data: result.rows[0] });
+  } catch (err) {
+    console.error('Mark as read error:', err);
+    res.status(500).json({ message: 'Hiba az üzenet olvasottra állításakor' });
+  }
+});
+
 app.get('/api/messages', async (req, res) => {
   try {
     const result = await pool.query(`
@@ -258,7 +197,6 @@ app.get('/api/messages', async (req, res) => {
   }
 });
 
-// Get messages for current user
 app.get('/api/messages/:userId', async (req, res) => {
   const userId = parseInt(req.params.userId);
 
@@ -279,7 +217,6 @@ app.get('/api/messages/:userId', async (req, res) => {
   }
 });
 
-// Send message
 app.post('/api/messages', async (req, res) => {
   const { sender_id, recipient_id, content } = req.body;
 
@@ -313,11 +250,6 @@ app.post('/api/messages', async (req, res) => {
   }
 });
 
-// ════════════════════════════════════════
-// STATS ROUTES
-// ════════════════════════════════════════
-
-// Health check
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'OK',
@@ -326,7 +258,6 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Get stats
 app.get('/api/stats', async (req, res) => {
   try {
     const userCount = await pool.query('SELECT COUNT(*) as count FROM users');
@@ -343,13 +274,11 @@ app.get('/api/stats', async (req, res) => {
   }
 });
 
-// Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ message: 'Ismeretlen szerverhiba' });
 });
 
-// Start server
 app.listen(PORT, () => {
   console.log('\n═══════════════════════════════════════════════════════════');
   console.log('  🚀 Express szerver fut!');

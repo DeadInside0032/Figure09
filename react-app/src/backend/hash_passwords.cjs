@@ -10,7 +10,7 @@ const pool = new pg.Pool({
 async function hashPasswords() {
   const users = await pool.query('SELECT id, password FROM users');
   for (const user of users.rows) {
-    if (user.password.startsWith('$2b$')) continue; // Már hash-elt
+    if (user.password.startsWith('$2b$')) continue;
     const hash = await bcrypt.hash(user.password, 10);
     await pool.query('UPDATE users SET password = $1 WHERE id = $2', [hash, user.id]);
     console.log(`Felhasználó ${user.id} jelszava titkosítva`);
