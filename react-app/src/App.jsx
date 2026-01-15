@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import './App.css'
 import Login from './pages/Login'
@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard'
 import UserDashboard from './pages/UserDashboard'
 import Messages from './pages/Messages'
 import Users from './pages/Users'
+import ConversationPartners from './pages/ConversationPartners'
 import Navbar from './components/Navbar'
 
 function App() {
@@ -42,36 +43,66 @@ function App() {
 
   return (
     <Router>
-      {!currentUser ? (
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      ) : (
-        <>
-          <Navbar 
-            user={currentUser} 
-            onLogout={handleLogout}
-          />
-          <Routes>
-            {currentUser?.is_admin ? (
-              <>
-                <Route path="/" element={<Dashboard user={currentUser} />} />
-                <Route path="/messages" element={<Messages user={currentUser} />} />
-                <Route path="/users" element={<Users user={currentUser} onUserDeleted={fetchUsers} />} />
-              </>
-            ) : (
-              <>
-                <Route path="/" element={<UserDashboard user={currentUser} />} />
-                <Route path="/messages" element={<Messages user={currentUser} />} />
-              </>
-            )}
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        </>
-      )}
+      <AppContent 
+        currentUser={currentUser} 
+        handleLogout={handleLogout} 
+        fetchUsers={fetchUsers} 
+        users={users} 
+        loading={loading} 
+      />
     </Router>
   )
+}
+
+function AppContent({ currentUser, handleLogout, fetchUsers, users, loading }) {
+  const location = useLocation();
+  if (loading) return <div className="loading">Betöltés...</div>;
+  return (
+    !currentUser ? (
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    ) : (
+      <>
+        {location.pathname === '/' && (
+          <div style={{ 
+              background: 'white', 
+              padding: '2rem', 
+              borderRadius: '8px', 
+              margin: '1rem 2rem 0 2rem',
+              textAlign: 'center',
+              color:'black',
+              maxWidth: '1200px',
+              marginLeft: 'auto',
+              marginRight: 'auto'
+          }}>
+              <h2>Üdvözli a Temu-s Messenger</h2>
+          </div>
+        )}
+        <Navbar 
+          user={currentUser} 
+          onLogout={handleLogout}
+        />
+        <Routes>
+          {currentUser?.is_admin ? (
+            <>
+              <Route path="/" element={<Dashboard user={currentUser} />} />
+              <Route path="/messages" element={<Messages user={currentUser} />} />
+              <Route path="/users" element={<Users user={currentUser} onUserDeleted={fetchUsers} />} />
+            </>
+          ) : (
+            <>
+              <Route path="/" element={<UserDashboard user={currentUser} />} />
+              <Route path="/messages" element={<Messages user={currentUser} />} />
+              <Route path="/partners" element={<ConversationPartners user={currentUser} />} />
+            </>
+          )}
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </>
+    )
+  );
 }
 
 export default App

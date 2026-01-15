@@ -1,6 +1,33 @@
+// ...existing code...
+// Mark message as read (helyes helyen, a route-ok között)
+
+// ════════════════════════════════════════
+// MESSAGES ROUTES
+// ════════════════════════════════════════
+
+// ... korábbi üzenetkezelő endpointok ...
+
+// PATCH: Mark message as read
+app.patch('/api/messages/:id/read', async (req, res) => {
+  const messageId = parseInt(req.params.id);
+  try {
+    const result = await pool.query(
+      'UPDATE messages SET is_read = true, updated_at = NOW() WHERE id = $1 RETURNING *',
+      [messageId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Üzenet nem található' });
+    }
+    res.json({ message: 'Üzenet olvasottra állítva', data: result.rows[0] });
+  } catch (err) {
+    console.error('Mark as read error:', err);
+    res.status(500).json({ message: 'Hiba az üzenet olvasottra állításakor' });
+  }
+});
 const express = require('express');
 const cors = require('cors');
 const pg = require('pg');
+const bcrypt = require('bcrypt');
 require('dotenv').config();
 
 const app = express();
@@ -32,8 +59,8 @@ app.post('/api/login', async (req, res) => {
 
   try {
     const result = await pool.query(
-      'SELECT id, username, email, is_admin, created_at FROM users WHERE username = $1 AND email = $2 AND password = $3',
-      [username, email, password]
+      'SELECT id, username, email, password, is_admin, created_at FROM users WHERE username = $1 AND email = $2',
+      [username, email]
     );
 
     if (result.rows.length === 0) {
@@ -41,6 +68,10 @@ app.post('/api/login', async (req, res) => {
     }
 
     const user = result.rows[0];
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
+      return res.status(401).json({ message: 'Hibás jelszó' });
+    }
     res.json({
       message: 'Sikeres bejelentkezés',
       user: {
@@ -76,10 +107,13 @@ app.post('/api/register', async (req, res) => {
       return res.status(400).json({ message: 'A felhasználónév vagy email már létezik' });
     }
 
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     // Create new user (default: is_admin = false)
     const insertResult = await pool.query(
       'INSERT INTO users (username, email, password, is_admin, created_at, updated_at) VALUES ($1, $2, $3, false, NOW(), NOW()) RETURNING id, username, email, is_admin, created_at',
-      [username, email, password]
+      [username, email, hashedPassword]
     );
 
     res.status(201).json({
@@ -150,9 +184,12 @@ app.post('/api/users', async (req, res) => {
       return res.status(400).json({ message: 'A felhasználónév vagy email már létezik' });
     }
 
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const insertResult = await pool.query(
       'INSERT INTO users (username, email, password, is_admin, created_at, updated_at) VALUES ($1, $2, $3, false, NOW(), NOW()) RETURNING id, username, email, is_admin, created_at',
-      [username, email, password]
+      [username, email, hashedPassword]
     );
 
     res.status(201).json({

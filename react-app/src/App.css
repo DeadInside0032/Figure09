@@ -1,3 +1,23 @@
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+#root {
+  height: 100%;
+}
+
+.black {
+  color: black;
+}
+
+.messages-container {
+  height: 600px; /* vagy amennyi kell, igény szerint állítható */
+  overflow-y: auto;
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 1rem;
+}
 :root {
   --primary: #007bff;
   --secondary: #6c757d;
@@ -30,6 +50,13 @@ body {
   min-height: 100vh;
   font-size: 1.5rem;
   color: #333;
+}
+
+/* Main content container */
+#root {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
 }
 
 /* Navbar */
@@ -163,7 +190,7 @@ button:active {
   border-radius: 8px;
   padding: 1.5rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  max-width: 800px;
+  max-width: 1200px;
   margin: 2rem auto;
 }
 

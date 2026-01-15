@@ -73,7 +73,7 @@ export default function Login() {
     <div style={styles.container}>
       <div style={styles.card}>
         <h1 style={styles.title}>
-          💬 Üzenetküldő
+           Temu-s Messenger
         </h1>
         
         <p style={styles.subtitle}>

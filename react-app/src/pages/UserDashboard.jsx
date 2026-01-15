@@ -1,25 +1,43 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-function Dashboard({ user }) {
+function UserDashboard({ user }) {
   const [stats, setStats] = useState({
-    totalMessages: 0,
-    totalUsers: 0,
+    userMessages: 0,
+    conversationPartners: 0,
   })
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
   useEffect(() => {
     fetchStats()
-  }, [])
+  }, [user?.id])
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/stats')
-      const data = await response.json()
-      setStats(data)
+      // Lekérjük az adott felhasználó üzeneteit
+      const messagesResponse = await fetch(`http://localhost:3001/api/messages/${user?.id}`)
+      const messages = await messagesResponse.json()
+      
+      // Összes üzenet száma az adott felhasználónak
+      const userMessages = messages.length
+
+      // Hány különböző partnerrel kommunikál
+      const partners = new Set()
+      messages.forEach(msg => {
+        if (msg.sender_id === user?.id) {
+          partners.add(msg.recipient_id)
+        } else {
+          partners.add(msg.sender_id)
+        }
+      })
+
+      setStats({
+        userMessages: userMessages,
+        conversationPartners: partners.size
+      })
     } catch (err) {
-      console.error('Nem sikerült betölteni az adatokat')
+      console.error('Nem sikerült betölteni az adatokat:', err)
     } finally {
       setLoading(false)
     }
@@ -29,7 +47,7 @@ function Dashboard({ user }) {
 
   return (
     <div className="container">
-      <h1>Üdvözlünk, {user?.username}! 👑</h1>
+    
       
       <div className="users-grid" style={{ marginTop: '2rem' }}>
         <button 
@@ -42,18 +60,18 @@ function Dashboard({ user }) {
             textAlign: 'center'
           }}
         >
-          <div className="user-card" style={{ textAlign: 'center', padding: '2rem', transition: 'transform 0.2s' }} 
+          <div className="user-card" style={{ textAlign: 'center', padding: '2rem', transition: 'transform 0.2s' }}
                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
-            <h3>📨 Összes üzenet</h3>
+            <h2 className='black'> Kuldj uzenetet</h2>
             <p style={{ fontSize: '2rem', color: 'var(--primary)', fontWeight: 'bold' }}>
-              {stats.totalMessages}
+              
             </p>
           </div>
         </button>
         
         <button 
-          onClick={() => navigate('/users')}
+          onClick={() => navigate('/partners')}
           style={{
             background: 'none',
             border: 'none',
@@ -65,9 +83,9 @@ function Dashboard({ user }) {
           <div className="user-card" style={{ textAlign: 'center', padding: '2rem', transition: 'transform 0.2s' }}
                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
-            <h3>👥 Felhasználók</h3>
+            <h2 className='black'>Beszelgetesek</h2>
             <p style={{ fontSize: '2rem', color: 'var(--success)', fontWeight: 'bold' }}>
-              {stats.totalUsers}
+              {stats.conversationPartners}
             </p>
           </div>
         </button>
@@ -76,4 +94,4 @@ function Dashboard({ user }) {
   )
 }
 
-export default Dashboard
+export default UserDashboard

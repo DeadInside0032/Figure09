@@ -31,12 +31,17 @@ const styles = {
     background: '#007bff',
     color: 'white',
     padding: '1rem',
-    marginBottom: '2rem'
+    borderRadius: '8px',
+    margin: '1rem auto 2rem auto',
+    maxWidth: '1200px',
+    display: 'flex',
+    justifyContent: 'center'
   },
   container: {
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'center'
+    alignItems: 'center',
+    width: '100%'
   },
   link: {
     color: 'white',
