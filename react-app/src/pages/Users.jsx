@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 
-function Users({ user }) {
+function Users({ user, onUserDeleted }) {
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -12,10 +12,7 @@ function Users({ user }) {
 
   const fetchUsers = async () => {
     try {
-      const token = localStorage.getItem('token')
-      const response = await axios.get('http://localhost:3001/api/users', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const response = await axios.get('http://localhost:3001/api/users')
       setUsers(response.data)
     } catch (err) {
       setError('Nem sikerült betölteni a felhasználókat')
@@ -27,10 +24,8 @@ function Users({ user }) {
   const handleDeleteUser = async (userId) => {
     if (window.confirm('Biztosan törölni szeretnéd ezt a felhasználót?')) {
       try {
-        const token = localStorage.getItem('token')
-        await axios.delete(`http://localhost:3001/api/users/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
+        await axios.delete(`http://localhost:3001/api/users/${userId}`)
+        onUserDeleted()
         fetchUsers()
       } catch (err) {
         setError('Nem sikerült törölni a felhasználót')

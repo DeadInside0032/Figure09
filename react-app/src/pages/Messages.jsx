@@ -3,7 +3,7 @@ import axios from 'axios'
 
 function Messages({ user }) {
   const [messages, setMessages] = useState([])
-  const [recipients, setRecipients] = useState([])
+  const [otherUsers, setOtherUsers] = useState([])
   const [selectedRecipient, setSelectedRecipient] = useState('')
   const [messageText, setMessageText] = useState('')
   const [loading, setLoading] = useState(true)
@@ -12,15 +12,12 @@ function Messages({ user }) {
 
   useEffect(() => {
     fetchMessages()
-    fetchRecipients()
-  }, [])
+    fetchOtherUsers()
+  }, [user?.id])
 
   const fetchMessages = async () => {
     try {
-      const token = localStorage.getItem('token')
-      const response = await axios.get('http://localhost:3001/api/messages', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const response = await axios.get('http://localhost:3001/api/messages')
       setMessages(response.data)
     } catch (err) {
       setError('Nem sikerült betölteni az üzeneteket')
@@ -29,13 +26,11 @@ function Messages({ user }) {
     }
   }
 
-  const fetchRecipients = async () => {
+  const fetchOtherUsers = async () => {
     try {
-      const token = localStorage.getItem('token')
-      const response = await axios.get('http://localhost:3001/api/users', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      setRecipients(response.data)
+      const response = await axios.get('http://localhost:3001/api/users')
+      const others = response.data.filter(u => u.id !== user?.id)
+      setOtherUsers(others)
     } catch (err) {
       console.error('Nem sikerült betölteni a felhasználókat')
     }
@@ -52,15 +47,11 @@ function Messages({ user }) {
     }
 
     try {
-      const token = localStorage.getItem('token')
-      await axios.post(
-        'http://localhost:3001/api/messages',
-        {
-          recipient_id: selectedRecipient,
-          content: messageText,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
+      await axios.post('http://localhost:3001/api/messages', {
+        sender_id: user?.id,
+        recipient_id: parseInt(selectedRecipient),
+        content: messageText,
+      })
 
       setSuccess('Üzenet sikeresen elküldve!')
       setMessageText('')
@@ -92,13 +83,11 @@ function Messages({ user }) {
                 required
               >
                 <option value="">-- Válassz felhasználót --</option>
-                {recipients
-                  .filter((r) => r.id !== user?.id)
-                  .map((recipient) => (
-                    <option key={recipient.id} value={recipient.id}>
-                      {recipient.username} ({recipient.email})
-                    </option>
-                  ))}
+                {otherUsers.map((recipient) => (
+                  <option key={recipient.id} value={recipient.id}>
+                    {recipient.username} ({recipient.email})
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -121,7 +110,7 @@ function Messages({ user }) {
         <hr style={{ margin: '2rem 0' }} />
 
         <div>
-          <h2>Beérkezett üzenetek</h2>
+          <h2>Összes üzenet</h2>
           <div className="messages-list">
             {messages.length === 0 ? (
               <p style={{ textAlign: 'center', color: '#999' }}>Nincs üzenet</p>
@@ -129,8 +118,11 @@ function Messages({ user }) {
               messages.map((msg) => (
                 <div key={msg.id} className={`message ${msg.sender_id === user?.id ? 'sent' : 'received'}`}>
                   <div className="message-meta">
-                    <strong>{msg.sender_username || msg.recipient_username}</strong>
-                    {msg.sender_id === user?.id && ' (Te küldted)'}
+                    <strong>
+                      {msg.sender_id === user?.id ? 'Te' : msg.sender_username}
+                      {' - '}
+                      {msg.recipient_id === user?.id ? 'Te' : msg.recipient_username}
+                    </strong>
                     <br />
                     {new Date(msg.created_at).toLocaleString('hu-HU')}
                   </div>
