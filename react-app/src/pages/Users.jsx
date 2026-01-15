@@ -12,7 +12,8 @@ function Users({ user, onUserDeleted }) {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/users')
+      const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await axios.get(`${API}/api/users`)
       setUsers(response.data)
     } catch (err) {
       setError('Nem sikerült betölteni a felhasználókat')

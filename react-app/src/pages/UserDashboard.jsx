@@ -15,7 +15,8 @@ function UserDashboard({ user }) {
 
   const fetchStats = async () => {
     try {
-      const messagesResponse = await fetch(`http://localhost:3001/api/messages/${user?.id}`)
+      const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const messagesResponse = await fetch(`${API}/api/messages/${user?.id}`)
       const messages = await messagesResponse.json()
       
       const userMessages = messages.length

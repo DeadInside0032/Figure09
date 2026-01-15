@@ -17,3 +17,4 @@ export default defineConfig({
     allowedHosts: ["figure09-front.onrender.com"]
   },
 })
+//https://figure09.onrender.com

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 function ConversationPartners({ user }) {
   const [partners, setPartners] = useState([])
@@ -16,7 +17,7 @@ function ConversationPartners({ user }) {
 
   const fetchConversationPartners = async () => {
     try {
-      const response = await axios.get(`http://localhost:3001/api/messages/${user?.id}`)
+      const response = await axios.get(`${API}/api/messages/${user?.id}`)
       const userMessages = response.data
 
       const partnersSet = new Map()
@@ -44,7 +45,7 @@ function ConversationPartners({ user }) {
 
   const fetchMessagesWithPartner = async (partnerId) => {
     try {
-      const response = await axios.get(`http://localhost:3001/api/messages/${user?.id}`)
+      const response = await axios.get(`${API}/api/messages/${user?.id}`)
       const userMessages = response.data
       const filtered = userMessages.filter(m =>
         (m.sender_id === user?.id && m.recipient_id === partnerId) ||
@@ -74,7 +75,7 @@ function ConversationPartners({ user }) {
     }
 
     try {
-      await axios.post('http://localhost:3001/api/messages', {
+      await axios.post(`${API}/api/messages`, {
         sender_id: user?.id,
         recipient_id: selectedPartnerId,
         content: messageText,

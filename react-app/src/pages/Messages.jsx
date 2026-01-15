@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 function Messages({ user }) {
   const [messages, setMessages] = useState([])
@@ -28,7 +29,7 @@ function Messages({ user }) {
 
   const fetchOtherUsers = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/users')
+      const response = await axios.get(`${API}/api/users`)
       const others = response.data.filter(u => u.id !== user?.id)
       setOtherUsers(others)
     } catch (err) {
@@ -52,7 +53,7 @@ function Messages({ user }) {
     }
 
     try {
-      await axios.post('http://localhost:3001/api/messages', {
+      await axios.post(`${API}/api/messages`, {
         sender_id: user?.id,
         recipient_id: parseInt(selectedRecipient),
         content: messageText,

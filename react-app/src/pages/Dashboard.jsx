@@ -15,7 +15,8 @@ function Dashboard({ user }) {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/stats')
+      const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${API}/api/stats`)
       const data = await response.json()
       setStats(data)
     } catch (err) {
