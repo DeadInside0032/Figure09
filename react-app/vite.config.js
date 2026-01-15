@@ -14,6 +14,6 @@ export default defineConfig({
     },
   },
   preview: {
-    allowedHosts: ["figure09-1.onrender.com"]
+    allowedHosts: ["figure09-front.onrender.com"]
   },
 })
